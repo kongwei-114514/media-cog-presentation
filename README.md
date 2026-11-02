@@ -22,7 +22,8 @@ media-cog-presentation/
 |   |-- README.md                         # 笔记目录索引
 |   |-- 01-paper-summary.md               # 论文深度精读总结（背景、动机、FastViTHD 架构与实验全解）
 |   |-- 02-architecture-and-tables.md     # 核心架构参数、Token 计算公式与关键实验数据速查表
-|   `-- 03-presentation-guide.md          # 课程展示讲解指南（叙事主线、分页蓝图、逐页讲稿与 Q&A 预案）
+|   |-- 03-presentation-guide.md          # 课程展示讲解指南（叙事主线、分页蓝图、逐页讲稿与 Q&A 预案）
+|   `-- 04-architecture-design-rationale.md # Figure 2 深度拆解：四代架构演进与各模块底层设计逻辑
 `-- slides/                               # 幻灯片与讲稿素材目录
     `-- README.md                         # 幻灯片目录说明
 ```
@@ -34,6 +35,7 @@ media-cog-presentation/
 | 阅读论文原文 PDF | [FastVLM_2412.13303.pdf](paper/FastVLM_2412.13303.pdf) |
 | 浏览提取的论文高清原图（可直接用于 PPT） | [论文与图表索引](paper/README.md) |
 | 掌握论文核心脉络、动机、架构设计与实验结论 | [01-paper-summary.md](notes/01-paper-summary.md) |
+| 深入理解 Figure 2 各模块为什么这样设计（结合前作与开源代码） | [04-architecture-design-rationale.md](notes/04-architecture-design-rationale.md) |
 | 查阅 `FastViTHD` 各阶段参数、Token 数量与端侧延迟对比表 | [02-architecture-and-tables.md](notes/02-architecture-and-tables.md) |
 | 准备课程展示叙事逻辑、分页结构、逐页讲稿与问答（Q&A） | [03-presentation-guide.md](notes/03-presentation-guide.md) |
 
