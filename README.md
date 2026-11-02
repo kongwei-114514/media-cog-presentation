@@ -27,7 +27,8 @@ media-cog-presentation/
     |-- README.md                           # 笔记目录索引
     |-- 01-paper-summary.md                 # FastVLM 论文精读总结（背景痛点、FastViTHD 架构与实验分析）
     |-- 02-architecture-and-tables.md       # 核心架构参数、Token 计算公式与实验数据对照表
-    `-- 03-architecture-design-rationale.md # 架构演进与设计逻辑拆解（结合 FastViT、MobileCLIP 与官方源码）
+    |-- 03-architecture-design-rationale.md # 架构演进与设计逻辑拆解（结合 FastViT、MobileCLIP 与官方源码）
+    `-- 04-storyline.md                     # 文献讲解核心主线（6~7 分钟四层递进架构剖析与演进脉络）
 ```
 
 ## Quick navigation
@@ -41,3 +42,4 @@ media-cog-presentation/
 | FastVLM 论文全文总结 | [01-paper-summary.md](notes/01-paper-summary.md) |
 | 架构参数与数据表 | [02-architecture-and-tables.md](notes/02-architecture-and-tables.md) |
 | 架构演进与设计原理拆解（`FastViT` $\rightarrow$ `MobileCLIP` $\rightarrow$ `FastViTHD`） | [03-architecture-design-rationale.md](notes/03-architecture-design-rationale.md) |
+| 文献讲解核心主线（6~7 分钟四层递进架构剖析与演进脉络） | [04-storyline.md](notes/04-storyline.md) |
