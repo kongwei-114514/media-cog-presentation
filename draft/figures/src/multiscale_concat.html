@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; background: #ffffff; }
+  body { width: 1500px; height: 880px; font-family: "Microsoft YaHei", "PingFang SC", sans-serif; }
+</style>
+</head>
+<body>
+<svg id="c" width="1500" height="880" viewBox="0 0 1500 880" xmlns="http://www.w3.org/2000/svg"></svg>
+<script>
+const NS = "http://www.w3.org/2000/svg";
+const svg = document.getElementById("c");
+function el(tag, attrs, text) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (text !== undefined) e.textContent = text;
+  svg.appendChild(e);
+  return e;
+}
+const K = 0.7, J = 0.5;
+function cuboid(x, y, s, d, c) {
+  const dx = K * d, dy = -J * d, st = { stroke: "#2b2b2b", "stroke-width": 2.5, "stroke-linejoin": "round" };
+  el("polygon", { points: `${x},${y} ${x+dx},${y+dy} ${x+s+dx},${y+dy} ${x+s},${y}`, fill: c.top, ...st });
+  el("polygon", { points: `${x+s},${y} ${x+s+dx},${y+dy} ${x+s+dx},${y+s+dy} ${x+s},${y+s}`, fill: c.side, ...st });
+  el("rect", { x, y, width: s, height: s, fill: c.front, ...st });
+}
+function arrow(x1, y1, x2, y2) {
+  el("line", { x1, y1, x2, y2, stroke: "#52514e", "stroke-width": 3 });
+  const a = Math.atan2(y2 - y1, x2 - x1), L = 14, W = 8;
+  const p = [[x2, y2], [x2 - L * Math.cos(a) + W * Math.sin(a), y2 - L * Math.sin(a) - W * Math.cos(a)], [x2 - L * Math.cos(a) - W * Math.sin(a), y2 - L * Math.sin(a) + W * Math.cos(a)]];
+  el("polygon", { points: p.map(q => q.join(",")).join(" "), fill: "#52514e" });
+}
+const C = [
+  { front: "#d5d5d5", top: "#e8e8e8", side: "#bcbcbc" },
+  { front: "#b9b9b9", top: "#d0d0d0", side: "#a2a2a2" },
+  { front: "#f0e6c8", top: "#f7f0dc", side: "#ddcfa3" },
+  { front: "#e0cc93", top: "#ece0b8", side: "#c9b578" },
+];
+const src = [
+  { name: "Stage 2", s: 150, d: 26,  hw: "128×128", ch: 192,  pool: true },
+  { name: "Stage 3", s: 105, d: 46,  hw: "64×64",   ch: 384,  pool: true },
+  { name: "Stage 4", s: 75,  d: 80,  hw: "32×32",   ch: 768,  pool: true },
+  { name: "Stage 5", s: 52,  d: 135, hw: "16×16",   ch: 1536, pool: false },
+];
+const topBase = 260, botY = 580, small = 52;
+let x = 50;
+const bottoms = [];
+src.forEach((g, i) => {
+  cuboid(x, topBase - g.s, g.s, g.d, C[i]);
+  const cx = x + g.s / 2;
+  el("text", { x: x + (g.s + K * g.d) / 2, y: topBase + 36, "font-size": 24, "font-weight": 700, fill: "#0b0b0b", "text-anchor": "middle" }, g.name);
+  el("text", { x: x + (g.s + K * g.d) / 2, y: topBase + 66, "font-size": 20, fill: "#52514e", "text-anchor": "middle" }, `${g.hw} × ${g.ch}`);
+  // down arrow to the pooled copy (ends above the copy's top face)
+  const bx = cx - small / 2;
+  arrow(cx, topBase + 82, cx, botY - small - J * g.d - 12);
+  el("text", { x: cx + 12, y: topBase + 135, "font-size": 20, fill: g.pool ? "#D62728" : "#52514e", "font-weight": g.pool ? 700 : 400 }, g.pool ? "Learned Pool" : "原样");
+  cuboid(bx, botY - small, small, g.d, C[i]);
+  el("text", { x: bx + (small + K * g.d) / 2, y: botY + 32, "font-size": 20, fill: "#52514e", "text-anchor": "middle" }, `16×16 × ${g.ch}`);
+  bottoms.push(cx);
+  x += g.s + K * g.d + 70;
+});
+
+// bus into the C node: each copy drops down, then all run right along one line
+const busY = botY + 90, cx0 = 1010;
+bottoms.forEach(bxc => el("line", { x1: bxc, y1: botY + 48, x2: bxc, y2: busY, stroke: "#52514e", "stroke-width": 3 }));
+arrow(bottoms[0], busY, cx0 - 36, busY);
+el("circle", { cx: cx0, cy: busY, r: 30, fill: "#ffffff", stroke: "#2b2b2b", "stroke-width": 3 });
+el("text", { x: cx0, y: busY + 11, "font-size": 32, "text-anchor": "middle", fill: "#0b0b0b" }, "C");
+el("text", { x: cx0, y: busY - 46, "font-size": 22, "font-weight": 700, fill: "#D62728", "text-anchor": "middle" }, "沿通道拼接");
+arrow(cx0 + 34, busY, cx0 + 80, busY);
+
+// concatenated cuboid: four depth segments, drawn back to front
+const ox = 1110, oy = busY - small / 2;
+const depths = src.map(g => g.d);
+let acc = depths.reduce((a, b) => a + b, 0);
+for (let i = depths.length - 1; i >= 0; i--) {
+  acc -= depths[i];
+  cuboid(ox + K * acc, oy - J * acc, small, depths[i], C[i]);
+}
+el("text", { x: ox + 120, y: busY + 70, "font-size": 24, "font-weight": 700, fill: "#0b0b0b", "text-anchor": "middle" }, "还是 16×16 = 256 个位置");
+el("text", { x: ox + 120, y: busY + 104, "font-size": 22, fill: "#52514e", "text-anchor": "middle" }, "每个位置的通道 = 四路首尾相接");
+el("text", { x: ox + 120, y: busY + 142, "font-size": 26, "font-weight": 700, fill: "#D62728", "text-anchor": "middle" }, "token 数不变，信息更全");
+
+el("text", { x: 50, y: 50, "font-size": 24, fill: "#52514e" }, "正面大小 = 长 × 宽（位置数）     厚度 = 通道数     （按 1024² 输入）");
+</script>
+</body>
+</html>

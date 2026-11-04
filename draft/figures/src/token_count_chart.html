@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<style>
+  .viz-root {
+    --surface-1: #ffffff;
+    --text-primary: #0b0b0b;
+    --text-secondary: #52514e;
+    --grid: #e7e6e2;
+    --series-1: #2a78d6;
+  }
+  html, body { margin: 0; background: #ffffff; }
+  body { width: 1200px; height: 700px; font-family: "Microsoft YaHei", "PingFang SC", sans-serif; }
+</style>
+</head>
+<body class="viz-root">
+<svg width="1200" height="700" viewBox="0 0 1200 700" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="700" fill="var(--surface-1)"/>
+
+  <!-- caption -->
+  <text x="120" y="70" font-size="30" fill="var(--text-secondary)">ViT-L/14 输出的视觉 token 数</text>
+
+  <!-- y scale: 0..6000 mapped to y=600..140 (460px) -->
+  <g stroke="var(--grid)" stroke-width="2">
+    <line x1="120" y1="600" x2="1100" y2="600" stroke="var(--text-secondary)"/>
+    <line x1="120" y1="446.7" x2="1100" y2="446.7"/>
+    <line x1="120" y1="293.3" x2="1100" y2="293.3"/>
+    <line x1="120" y1="140" x2="1100" y2="140"/>
+  </g>
+  <g font-size="22" fill="var(--text-secondary)" text-anchor="end">
+    <text x="105" y="607">0</text>
+    <text x="105" y="454">2000</text>
+    <text x="105" y="300">4000</text>
+    <text x="105" y="147">6000</text>
+  </g>
+
+  <!-- bar 1: 576 -> height 44.2 -->
+  <path d="M 290 600 L 290 559.8 Q 290 555.8 294 555.8 L 426 555.8 Q 430 555.8 430 559.8 L 430 600 Z" fill="var(--series-1)"/>
+  <!-- bar 2: 5300 -> height 406.3 -->
+  <path d="M 770 600 L 770 197.7 Q 770 193.7 774 193.7 L 906 193.7 Q 910 193.7 910 197.7 L 910 600 Z" fill="var(--series-1)"/>
+
+  <!-- value labels -->
+  <g font-size="40" font-weight="700" fill="var(--text-primary)" text-anchor="middle">
+    <text x="360" y="535">576</text>
+    <text x="840" y="173">≈ 5300</text>
+  </g>
+
+  <!-- x labels -->
+  <g font-size="28" fill="var(--text-primary)" text-anchor="middle">
+    <text x="360" y="645">336 × 336</text>
+    <text x="840" y="645">1024 × 1024</text>
+  </g>
+
+  <!-- annotation -->
+  <g stroke="var(--text-secondary)" stroke-width="2.5" fill="none">
+    <path d="M 450 500 C 560 470, 640 300, 745 230"/>
+    <path d="M 745 230 l -16 2 m 16 -2 l -6 15"/>
+  </g>
+  <text x="540" y="225" font-size="28" fill="var(--text-secondary)" text-anchor="middle">边长 ×3</text>
+  <text x="540" y="263" font-size="28" font-weight="700" fill="var(--text-primary)" text-anchor="middle">token ×9</text>
+</svg>
+</body>
+</html>

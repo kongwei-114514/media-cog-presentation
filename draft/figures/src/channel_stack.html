@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; background: #ffffff; }
+  body { width: 1500px; height: 560px; font-family: "Microsoft YaHei", "PingFang SC", sans-serif; }
+</style>
+</head>
+<body>
+<svg id="c" width="1500" height="560" viewBox="0 0 1500 560" xmlns="http://www.w3.org/2000/svg"></svg>
+<script>
+const NS = "http://www.w3.org/2000/svg";
+const svg = document.getElementById("c");
+function el(tag, attrs, text) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (text !== undefined) e.textContent = text;
+  svg.appendChild(e);
+  return e;
+}
+// cuboid: front square at (x, y) with side s, depth d drawn up-right
+function cuboid(x, y, s, d, c) {
+  const dx = 0.7 * d, dy = -0.5 * d, st = { stroke: "#2b2b2b", "stroke-width": 2.5, "stroke-linejoin": "round" };
+  el("polygon", { points: `${x},${y} ${x+dx},${y+dy} ${x+s+dx},${y+dy} ${x+s},${y}`, fill: c.top, ...st });
+  el("polygon", { points: `${x+s},${y} ${x+s+dx},${y+dy} ${x+s+dx},${y+s+dy} ${x+s},${y+s}`, fill: c.side, ...st });
+  el("rect", { x, y, width: s, height: s, fill: c.front, ...st });
+}
+const gray = { front: "#d5d5d5", top: "#e8e8e8", side: "#bcbcbc" };
+const beige = { front: "#f0e6c8", top: "#f7f0dc", side: "#ddcfa3" };
+
+const stages = [
+  { s: 230, d: 14,  hw: "256×256", ch: 96,   c: gray },
+  { s: 165, d: 26,  hw: "128×128", ch: 192,  c: gray },
+  { s: 118, d: 46,  hw: "64×64",   ch: 384,  c: gray },
+  { s: 84,  d: 80,  hw: "32×32",   ch: 768,  c: beige },
+  { s: 60,  d: 135, hw: "16×16",   ch: 1536, c: beige },
+];
+const base = 400, gap = 105;
+let x = 50;
+stages.forEach((g, i) => {
+  cuboid(x, base - g.s, g.s, g.d, g.c);
+  const cx = x + (g.s + 0.7 * g.d) / 2;
+  el("text", { x: cx, y: base + 48, "font-size": 28, "font-weight": 700, fill: "#0b0b0b", "text-anchor": "middle" }, `Stage ${i + 1}`);
+  el("text", { x: cx, y: base + 86, "font-size": 24, fill: "#52514e", "text-anchor": "middle" }, `${g.hw} × ${g.ch}`);
+  const right = x + g.s + 0.7 * g.d;
+  if (i < stages.length - 1) {
+    el("line", { x1: right + 18, y1: base - 40, x2: right + gap - 22, y2: base - 40, stroke: "#52514e", "stroke-width": 3 });
+    el("polygon", { points: `${right + gap - 22},${base - 48} ${right + gap - 8},${base - 40} ${right + gap - 22},${base - 32}`, fill: "#52514e" });
+  }
+  x = right + gap;
+});
+// axis hints
+el("text", { x: 50, y: 60, "font-size": 26, fill: "#52514e" }, "正面大小 = 长 × 宽（位置数）     厚度 = 通道数");
+el("text", { x: 750, y: 540, "font-size": 30, "font-weight": 700, fill: "#D62728", "text-anchor": "middle" }, "每压一次：长宽减半，通道翻倍 → 每个位置装得更多");
+</script>
+</body>
+</html>
