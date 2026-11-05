@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <style>
@@ -11,7 +11,7 @@
     --series-1: #2a78d6;
   }
   html, body { margin: 0; background: #ffffff; }
-  body { width: 1200px; height: 700px; font-family: "Microsoft YaHei", "PingFang SC", sans-serif; }
+  body { width: 1200px; height: 700px; font-family: "Segoe UI", Arial, sans-serif; }
 </style>
 </head>
 <body class="viz-root">
@@ -19,7 +19,7 @@
   <rect width="1200" height="700" fill="var(--surface-1)"/>
 
   <!-- caption -->
-  <text x="120" y="70" font-size="30" fill="var(--text-secondary)">ViT-L/14 输出的视觉 token 数</text>
+  <text x="120" y="70" font-size="30" fill="var(--text-secondary)">Visual tokens from ViT-L/14</text>
 
   <!-- y scale: 0..6000 mapped to y=600..140 (460px) -->
   <g stroke="var(--grid)" stroke-width="2">
@@ -57,8 +57,8 @@
     <path d="M 450 500 C 560 470, 640 300, 745 230"/>
     <path d="M 745 230 l -16 2 m 16 -2 l -6 15"/>
   </g>
-  <text x="540" y="225" font-size="28" fill="var(--text-secondary)" text-anchor="middle">边长 ×3</text>
-  <text x="540" y="263" font-size="28" font-weight="700" fill="var(--text-primary)" text-anchor="middle">token ×9</text>
+  <text x="540" y="225" font-size="28" fill="var(--text-secondary)" text-anchor="middle">side ×3</text>
+  <text x="540" y="263" font-size="28" font-weight="700" fill="var(--text-primary)" text-anchor="middle">tokens ×9</text>
 </svg>
 </body>
 </html>

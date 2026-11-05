@@ -1,13 +1,13 @@
 <!doctype html>
-<html lang="zh">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <style>
   html, body { margin: 0; background: #ffffff; }
-  body { width: 1024px; height: 1024px; box-sizing: border-box; padding: 44px 48px; font-family: "Microsoft YaHei", "PingFang SC", sans-serif; color: #0b0b0b; }
+  body { width: 1024px; height: 1024px; box-sizing: border-box; padding: 44px 48px; font-family: "Segoe UI", Arial, sans-serif; color: #0b0b0b; }
   h1 { font-size: 44px; margin: 0 0 6px; }
   .sub { font-size: 18px; color: #52514e; margin-bottom: 18px; }
-  table { border-collapse: collapse; width: 100%; font-size: 20px; margin-top: 10px; }
+  table { border-collapse: collapse; table-layout: fixed; width: 100%; font-size: 20px; margin-top: 10px; }
   th, td { border-bottom: 1px solid #c9c8c3; padding: 9px 10px; text-align: left; }
   th { background: #f1f0ec; }
   td.num { text-align: right; font-variant-numeric: tabular-nums; }
@@ -15,10 +15,10 @@
 </style>
 </head>
 <body>
-  <h1>门店月度经营简报</h1>
-  <div class="sub">2024 年上半年 · 单位：件 · 数据截至 6 月 30 日（示例数据）</div>
+  <h1>Monthly Store Sales Report</h1>
+  <div class="sub">H1 2024 · Unit: items sold · Data as of June 30 (sample data)</div>
 
-  <svg width="928" height="350" viewBox="0 50 928 350" xmlns="http://www.w3.org/2000/svg" font-family="Microsoft YaHei, sans-serif">
+  <svg width="928" height="350" viewBox="0 50 928 350" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">
     <g stroke="#e7e6e2" stroke-width="1.5">
       <line x1="40" y1="350" x2="920" y2="350" stroke="#52514e"/>
       <line x1="40" y1="263" x2="920" y2="263"/>
@@ -39,19 +39,20 @@
       <text x="560" y="150">3305</text><text x="705" y="184">2718</text><text x="850" y="133">3594</text>
     </g>
     <g font-size="18" fill="#0b0b0b" text-anchor="middle">
-      <text x="125" y="378">1 月</text><text x="270" y="378">2 月</text><text x="415" y="378">3 月</text>
-      <text x="560" y="378">4 月</text><text x="705" y="378">5 月</text><text x="850" y="378">6 月</text>
+      <text x="125" y="378">Jan</text><text x="270" y="378">Feb</text><text x="415" y="378">Mar</text>
+      <text x="560" y="378">Apr</text><text x="705" y="378">May</text><text x="850" y="378">Jun</text>
     </g>
   </svg>
 
   <table>
-    <tr><th>品类</th><th>6 月销量</th><th>环比</th><th>备注</th></tr>
-    <tr><td>饮品</td><td class="num">1,284</td><td class="num">+6.2%</td><td>新品上市</td></tr>
-    <tr><td>甜点</td><td class="num">963</td><td class="num">−3.1%</td><td>原料涨价</td></tr>
-    <tr><td>主食</td><td class="num">2,047</td><td class="num">+1.8%</td><td>基本持平</td></tr>
-    <tr><td>小吃</td><td class="num">715</td><td class="num">+12.4%</td><td>节日促销</td></tr>
+    <colgroup><col style="width:160px"><col style="width:260px"><col style="width:236px"><col style="width:272px"></colgroup>
+    <tr><th>Category</th><th>June sales</th><th>MoM</th><th>Notes</th></tr>
+    <tr><td>Drinks</td><td class="num">1,284</td><td class="num">+6.2%</td><td>New launch</td></tr>
+    <tr><td>Desserts</td><td class="num">963</td><td class="num">−3.1%</td><td>Costlier ingredients</td></tr>
+    <tr><td>Mains</td><td class="num">2,047</td><td class="num">+1.8%</td><td>About flat</td></tr>
+    <tr><td>Snacks</td><td class="num">715</td><td class="num">+12.4%</td><td>Holiday promo</td></tr>
   </table>
 
-  <div class="note">注：环比为与上月相比的变化；6 月数据含促销活动期间线上订单 312 件。<br>本表为演示用的虚构数据。</div>
+  <div class="note">Note: MoM = change from the previous month; June includes 312 online promo orders.<br>Fictional data, for demonstration only.</div>
 </body>
 </html>

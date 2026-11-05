@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="zh">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <style>
   html, body { margin: 0; background: #ffffff; }
-  body { width: 1500px; height: 880px; font-family: "Microsoft YaHei", "PingFang SC", sans-serif; }
+  body { width: 1500px; height: 880px; font-family: "Segoe UI", Arial, sans-serif; }
 </style>
 </head>
 <body>
@@ -55,7 +55,7 @@ src.forEach((g, i) => {
   // down arrow to the pooled copy (ends above the copy's top face)
   const bx = cx - small / 2;
   arrow(cx, topBase + 82, cx, botY - small - J * g.d - 12);
-  el("text", { x: cx + 12, y: topBase + 135, "font-size": 20, fill: g.pool ? "#D62728" : "#52514e", "font-weight": g.pool ? 700 : 400 }, g.pool ? "Learned Pool" : "原样");
+  el("text", { x: cx + 12, y: topBase + 135, "font-size": 20, fill: g.pool ? "#D62728" : "#52514e", "font-weight": g.pool ? 700 : 400 }, g.pool ? "Learned Pool" : "as is");
   cuboid(bx, botY - small, small, g.d, C[i]);
   el("text", { x: bx + (small + K * g.d) / 2, y: botY + 32, "font-size": 20, fill: "#52514e", "text-anchor": "middle" }, `16×16 × ${g.ch}`);
   bottoms.push(cx);
@@ -68,7 +68,7 @@ bottoms.forEach(bxc => el("line", { x1: bxc, y1: botY + 48, x2: bxc, y2: busY, s
 arrow(bottoms[0], busY, cx0 - 36, busY);
 el("circle", { cx: cx0, cy: busY, r: 30, fill: "#ffffff", stroke: "#2b2b2b", "stroke-width": 3 });
 el("text", { x: cx0, y: busY + 11, "font-size": 32, "text-anchor": "middle", fill: "#0b0b0b" }, "C");
-el("text", { x: cx0, y: busY - 46, "font-size": 22, "font-weight": 700, fill: "#D62728", "text-anchor": "middle" }, "沿通道拼接");
+el("text", { x: cx0, y: busY - 46, "font-size": 22, "font-weight": 700, fill: "#D62728", "text-anchor": "middle" }, "channel concat");
 arrow(cx0 + 34, busY, cx0 + 80, busY);
 
 // concatenated cuboid: four depth segments, drawn back to front
@@ -79,11 +79,11 @@ for (let i = depths.length - 1; i >= 0; i--) {
   acc -= depths[i];
   cuboid(ox + K * acc, oy - J * acc, small, depths[i], C[i]);
 }
-el("text", { x: ox + 120, y: busY + 70, "font-size": 24, "font-weight": 700, fill: "#0b0b0b", "text-anchor": "middle" }, "还是 16×16 = 256 个位置");
-el("text", { x: ox + 120, y: busY + 104, "font-size": 22, fill: "#52514e", "text-anchor": "middle" }, "每个位置的通道 = 四路首尾相接");
-el("text", { x: ox + 120, y: busY + 142, "font-size": 26, "font-weight": 700, fill: "#D62728", "text-anchor": "middle" }, "token 数不变，信息更全");
+el("text", { x: ox + 120, y: busY + 70, "font-size": 24, "font-weight": 700, fill: "#0b0b0b", "text-anchor": "middle" }, "Still 16×16 = 256 positions");
+el("text", { x: ox + 120, y: busY + 104, "font-size": 22, fill: "#52514e", "text-anchor": "middle" }, "Channels: 4 branches joined end to end");
+el("text", { x: ox + 120, y: busY + 142, "font-size": 26, "font-weight": 700, fill: "#D62728", "text-anchor": "middle" }, "Same token count, richer info");
 
-el("text", { x: 50, y: 50, "font-size": 24, fill: "#52514e" }, "正面大小 = 长 × 宽（位置数）     厚度 = 通道数     （按 1024² 输入）");
+el("text", { x: 50, y: 50, "font-size": 24, fill: "#52514e" }, "Front face = height × width (positions) · Depth = channels · for a 1024² input");
 </script>
 </body>
 </html>

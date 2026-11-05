@@ -1,5 +1,6 @@
 ---
 marp: true
+lang: en
 theme: default
 paginate: true
 size: 16:9
@@ -22,223 +23,223 @@ section.center p { text-align: center; }
 
 # FastVLM
 
-为高分辨率重新设计视觉编码器
+Redesigning the vision encoder for high resolution
 
 CVPR 2025 · Apple
 
 ---
 
-# 分辨率越高，VLM 越慢
+# Higher resolution, slower VLM
 
-**TTFT = 视觉编码时间 + LLM prefill 时间**
+**TTFT = vision encoding time + LLM prefill time**
 
 ![h:390](figures/p2_token_count_chart.png)
 
-token 数随分辨率**平方**增长
+Token count grows with the **square** of resolution
 
 <!--
-讲：接前一位同学。ViT 从头到尾不降采样，图越大 token 越多，每层都要对所有 token 做自注意力。
+Say: Pick up from the previous speaker. A ViT never downsamples: the bigger the image, the more tokens, and every layer runs self-attention over all of them.
 -->
 
 ---
 
-# 光减少 token 还不够
+# Cutting tokens is not enough
 
 ![bg right:48% contain](../paper/figures/ttft_breakdown.png)
 
-- 分辨率一高，**视觉编码本身**就是大头
-- 剪枝、切图：都在 ViT 外面打补丁
+- At high resolution, **vision encoding itself** takes most of the time
+- Token pruning, image tiling: patches applied outside the ViT
 
-→ 能不能换一个**天生适合高分辨率**的编码器？
+→ Can we use an encoder **built for high resolution**?
 
 <!--
-讲：先说清楚这张图画的是论文自己的模型，token 已经很少了，编码时间还是占大头。所以只减 token 不够；切图编码次数更多，更糟。
+Say: First make clear this chart shows the paper's own model: its token count is already small, yet encoding still takes most of the time. So cutting tokens alone is not enough; tiling is even worse, because it runs the encoder more times.
 -->
 
 ---
 
-# FastVLM 只换了流水线里的一个框
+# FastVLM swaps one box in the pipeline
 
 ![h:390](figures/p4_pipeline.png)
 
-- 只换视觉编码器，投影层和 LLM 沿用 LLaVA
-- 后面讲的 stage，都是这个框**里面**的结构
+- Only the vision encoder changes; projector and LLM follow LLaVA
+- Every stage from here on lives **inside** this box
 
 ---
 
 <!-- _class: center -->
 
-# 前作 FastViT：整体框架
+# Predecessor FastViT: the big picture
 
 ![h:470](../paper/figures/fastvit_arch.png)
 
-左边是骨架：4 个 stage 的金字塔 ｜ 右边是零件：每种模块的内部结构
+Left: the skeleton, a 4-stage pyramid | Right: the parts inside each block
 
 <!--
-讲：对着图讲大体框架。
-- 左列是主干：stem 先缩小 4 倍，接 4 个 stage，stage 之间各缩小一次。
-- 前 3 个 stage 用卷积（便宜，看局部），最后 1 个用自注意力（贵，看全局）。
-- 右边 (a)～(d) 是各种模块的内部结构。接下来逐块放大：先看卷积部分，再看哪里不适合高分辨率。
+Say: Walk through the overall layout on the figure.
+- The left column is the backbone: the stem downsamples 4×, then come 4 stages, with one more downsampling between each pair of stages.
+- The first 3 stages use convolution (cheap, local view); the last one uses self-attention (expensive, global view).
+- On the right, (a)–(d) show the inside of each block. Next we zoom in piece by piece: first the conv part, then where the design breaks down at high resolution.
 -->
 
 ---
 
-# 卷积部分没问题：推理时只剩一个卷积
+# The conv part is fine: one conv at inference
 
 ![h:380](figures/zoomC_fastvit_repmixer.png)
 
-训练时多条支路（好训练）→ 推理时合成一个卷积（跑得快）
-图越大，省得越多 → **这部分适合高分辨率，原样保留**
+Training: several branches (easy to train) → Inference: merged into one conv (fast)
+The bigger the image, the more it saves → **suits high resolution, keep as is**
 
 <!--
-讲：这就是 RepMixer 的结构重参数化。训练时 y = 卷积(x) + x，有一条直通支路；训练完以后，因为都是线性运算，可以把它合并成一个等价的新卷积。计算结果一样，但推理时少了一次来回读写，大图上省得尤其多。
-过渡：卷积部分没问题，那问题出在哪？看另外两处。
+Say: This is RepMixer's structural reparameterization. During training, y = conv(x) + x, with a skip branch; after training, since every operation is linear, it can be merged into one equivalent conv. The output is the same, but inference saves one round of memory reads and writes, which pays off most on large images.
+Transition: The conv part is fine, so where is the problem? Look at the other two places.
 -->
 
 ---
 
-# 压了 32 倍，为什么还不够？
+# Downsampled 32×: why is it still not enough?
 
 ![bg right:35% contain](figures/zoomA_fastvit_stage_column_annotated.png)
 
-- 每过一个 stage 缩小一次，**最后剩几个位置，就是几个 token**
-- 1024² 的图 → 32×32 = **1024** 个 token，交给 LLM 还是太多
+- Each stage downsamples once; **every position left at the end is one token**
+- 1024² image → 32×32 = **1024** tokens, still too many for the LLM
 
-→ 能不能**再压**？
+→ Can we **compress further**?
 
 <!--
-动画：先放不带标注的 stage 列（figures/zoomA_fastvit_stage_column.png），讲金字塔；再出倍数标注和红框，讲为什么还不够。
-讲：和切块对比，ViT 一开始切好、token 数不变；金字塔一边算一边缩小。
+Animation: First show the stage column without labels (figures/zoomA_fastvit_stage_column.png) and explain the pyramid; then bring in the downsampling labels and the red box and explain why it is still not enough.
+Say: Contrast with patchify: a ViT cuts the image into patches once and the token count never changes; a pyramid keeps shrinking the map as it computes.
 -->
 
 ---
 
-# 自注意力放得太早
+# Self-attention comes too early
 
 ![bg left:40% contain](figures/zoomB_fastvit_stage4_attention.png)
 
-模型放大时，习惯在 stage 3、4 多堆自注意力
+To scale a model up, the usual move is stacking self-attention in stages 3 and 4
 
-| stage 3（压 16 倍） | 位置数 | 自注意力开销 |
+| Stage 3 (16× down) | Positions | Self-attention cost |
 |---|---|---|
-| 224² 小图 | 196 | 便宜 |
-| 1024² 大图 | 4096 | 贵约 **400 倍** |
+| 224² image | 196 | cheap |
+| 1024² image | 4096 | about **400×** more |
 
 <!--
-讲：四步链：想把模型放大 → 习惯在 stage 3、4 堆自注意力 → 这些设计原本面向小图 → 换成大图，开销爆炸。
-过渡：这只是算出来的，实际跑起来有多慢？
+Say: A four-step chain: we want a bigger model → the habit is to stack self-attention in stages 3 and 4 → those designs were made for small images → switch to large images and the cost explodes.
+Transition: That is just on paper. How slow is it when it actually runs?
 -->
 
 ---
 
 <!-- _class: center -->
 
-# 实际跑起来：照常规放大，比纯卷积还慢
+# In practice: scaled the usual way, slower than pure conv
 
 ![h:430](../paper/figures/resolution_scaling_trend.png)
 
-橙：照常规放大的 FastViT ｜ 绿：纯卷积 ConvNeXt-L ｜ 蓝：FastViTHD（下一页讲）
+Orange: usual scaling | Green: pure-conv ConvNeXt-L | Blue: FastViTHD (next slide)
 
 <!--
-讲：
-- 注意纵轴是对数坐标。
-- 橙线就是上一页说的做法：在 stage 3、4 堆自注意力。分辨率一高，它比纯卷积的绿线还慢。
-- 所以病根确认了：压得不够。做自注意力之前压得不够，计算爆炸；交给 LLM 之前压得不够，token 太多。
-- 蓝线和橙线参数量一样，却快得多。它是怎么做到的？下一页。
+Say:
+- Note that the y-axis is on a log scale.
+- The orange line is the approach from the last slide: stacking self-attention in stages 3 and 4. At high resolution it is slower than even the pure-conv green line.
+- So the root cause is confirmed: not enough compression. Too little before self-attention, and compute explodes; too little before the LLM, and there are too many tokens.
+- The blue line has the same parameter count as the orange one, yet it is much faster. How? Next slide.
 -->
 
 ---
 
-# 再压一层
+# Compress one more level
 
 ![bg left:55% contain](figures/fastvit_stage_column_annotated_p7.png)
 ![bg contain](figures/fastvithd_stage_column_annotated.png)
 
-- 加第 5 个 stage，总共压 **64 倍**
-- 自注意力挪到 32×、64× 处
+- Add a 5th stage: **64×** downsampling in total
+- Move self-attention to the 32× and 64× stages
 
 | ViT | FastViT | FastViTHD |
 |---|---|---|
 | ≈ 5300 | 1024 | **256** |
 
-（1024² 输入的 token 数）
+(tokens for a 1024² input)
 
 <!--
-讲：一个改动同时治好两个问题，也就是上一页的蓝线。
+Say: One change fixes both problems at once. This is the blue line from the last slide.
 -->
 
 ---
 
-# 为什么别人没早这么做？
+# Why didn't anyone do this earlier?
 
-- 压得越狠，一个 token 盖住的区域越大 → **小字容易丢**
-- 当时的主流看法：ViTamin 建议总共只压 16 倍
+- The harder you compress, the more area one token covers → **small text gets lost**
+- The view at the time: ViTamin recommends only 16× downsampling in total
 
-→ 真正的问题：**怎么压，才能不丢东西？**
+→ The real question: **how do we compress without losing information?**
 
 ![w:1050](figures/p11_token_grid_coarse.png)
 
 ---
 
-# 怎么压到点上
+# Compressing the right way
 
 ![bg right:58% contain](figures/fastvithd_stages_p9_annotated.png)
 
-① 先看细节，再压缩
-图大时用便宜的卷积（RepMixer），压小了才做自注意力
+① Details first, then compress
+Cheap convs (RepMixer) while the map is large; self-attention only once it is small
 
-② 空间换通道（下一页）
+② Trade space for channels (next slide)
 
-③ 多尺度特征（再下一页）
+③ Multi-scale features (the slide after)
 
 ---
 
 <!-- _class: dense -->
 
-# ② 空间换通道：什么是“通道”？
+# ② Trading space for channels: what is a "channel"?
 
-- 特征图 = 高 × 宽 × **通道**
-- 一个卷积核卷出一个通道，几个核就有几个通道 → 每个位置有**几种特征**
+- Feature map = height × width × **channels**
+- Each conv kernel outputs one channel; more kernels, more channels → **how many features** each position has
 
 ![w:1000](figures/p13_channel_stack.png)
 
 <!--
-讲：通道不是层数。层数是叠了多少次运算（FastViTHD 五个 stage 分别是 2、12、24、4、2 层）；通道是每个位置用几个数来描述。RGB 图本身就是 3 个通道。最后一个 stage 的每个位置就是一个 token，它带着 1536 个数。
+Say: Channels are not layers. Layers count how many operations are stacked (FastViTHD's five stages have 2, 12, 24, 4 and 2 layers); channels count how many numbers describe each position. An RGB image already has 3 channels. Each position in the last stage is one token, and it carries 1536 numbers.
 -->
 
 ---
 
 <!-- _class: dense -->
 
-# ③ 多尺度特征：图里的 C 是什么？
+# ③ Multi-scale: what is the C?
 
 ![bg right:58% contain](figures/p14_multiscale_concat.png)
 
-1. 从 stage 2、3、4 各引出一路特征
-2. **Learned Pool**：用带步长的深度卷积，缩到和 stage 5 一样大（16×16）
-3. **C**：把几路特征沿**通道方向**拼起来
+1. Take one branch each from stages 2, 3 and 4
+2. **Learned Pool**: a strided depthwise conv shrinks each to stage 5's size (16×16)
+3. **C**: concatenate the branches along the **channel** dimension
 
-→ token 数还是 **256**，但每个 token 同时带着粗、细两种信息
+→ Still **256** tokens, but each token now carries both coarse and fine information
 
 <!--
-备选配图：论文原图局部 figures/fastvithd_multiscale_branches.png。
-讲：
-- 越靠前的 stage，图越大、看得越细；最后一个 stage 最浓缩、最“懂语义”。把前面的拉过来，能补回压缩时丢的细节。
-- Learned Pool 和普通池化的区别：普通池化是对每个小块直接取平均；Learned 是用一个能学习的卷积来缩小。论文两种都试了，后者稍好。
-- C（拼接）：同一个位置上，几路特征的数字首尾接起来，通道变长；位置数没变，所以 token 数不变。
-- 之后投影层再把这个长向量映射成 LLM 能读的长度。
+Alternative figure: a crop of the paper's original figure, figures/fastvithd_multiscale_branches.png.
+Say:
+- Earlier stages have larger maps and see finer detail; the last stage is the most condensed and the most "semantic". Pulling the earlier stages in brings back detail lost during compression.
+- Learned Pool vs. ordinary pooling: ordinary pooling just averages each small block; Learned Pool shrinks the map with a trainable conv. The paper tried both, and the learned one is slightly better.
+- C (concatenation): at each position, the numbers from the branches are joined end to end, so the channel vector gets longer; the number of positions does not change, so neither does the token count.
+- The projector then maps this long vector to the length the LLM can read.
 -->
 
 ---
 
-# 压缩换来的是分辨率
+# Compression buys resolution
 
 ![w:1100](figures/p15_same_tokens_resolution.png)
 
-同样 256 个 token，对 VLM 来说，**分辨率才是关键**
+The same 256 tokens: for a VLM, **resolution is what matters**
 
 <!--
-讲：这是同一张图的同一块局部，红格一格就是一个 token，整张图两边都是 16×16 = 256 个 token。左边是 ViT 用 256 个 token 只能看的 224² 图，小字已经糊掉；右边 FastViTHD 能看 1024²，表格和注释都读得出来。示例图是我们自己做的虚构数据。
+Say: This is the same crop of the same image. Each red cell is one token, and on both sides the whole image is 16×16 = 256 tokens. On the left, 256 tokens only let a ViT see a 224² image, and the small text is already a blur; on the right, FastViTHD sees 1024², so both the table and the note are readable. The sample is fictional data we made ourselves.
 -->
 
 
@@ -247,29 +248,29 @@ token 数随分辨率**平方**增长
 
 <!-- _class: center -->
 
-# 代价①：压得狠，就需要更强的训练
+# Cost ①: harder compression needs stronger training
 
 ![w:1100](../paper/figures/mobileclip_dr_schematic.png)
 
-每个 token 要装更多信息 → 预训练必须更强
-做法来自他们的 MobileCLIP：给每对图文提前备好**更好的配文**和**大模型老师的答案**
+Each token must hold more information → pretraining has to be stronger
+Taken from their MobileCLIP: prepare **better captions** and **large teacher models' outputs** for every image-text pair
 
 <!--
-讲：
-- 这张图是他们前作 MobileCLIP 的训练数据准备流程，FastViTHD 沿用了它。
-- (a) 给每张图做增强，再用一个会写描述的模型补写更好的配文；
-- (b) 让几个很大的 CLIP 模型（老师）把图和文各算一遍；
-- (c) 把这些都存进数据集，小模型训练时照着老师的答案学，也就是蒸馏。
-- 这是我们的理解：压得这么狠还能保住看图能力，很可能离不开这套训练。
+Say:
+- This figure is the training-data pipeline from their earlier MobileCLIP, which FastViTHD reuses.
+- (a) Augment each image, then have a captioning model write better captions;
+- (b) have several very large CLIP models (the teachers) encode both the image and the text;
+- (c) store all of this in the dataset, so the small model learns from the teachers' outputs during training, which is distillation.
+- This is our reading: keeping its visual ability under such heavy compression very likely depends on this training.
 -->
 
 ---
 
-# 代价②：分辨率要和 LLM 大小匹配
+# Cost ②: resolution must match the LLM size
 
-- 给很小的 LLM 喂超高分辨率的图，它也**用不上**
-- 视觉端压得再好，整个系统还是要两头一起调
+- A very small LLM **can't make use of** ultra-high-resolution images
+- However well the vision side compresses, both ends still have to be tuned together
 
 <br>
 
-**从编码器内部重新设计，而不是在外面打补丁**
+**Redesign the encoder from the inside, instead of patching it from the outside**
