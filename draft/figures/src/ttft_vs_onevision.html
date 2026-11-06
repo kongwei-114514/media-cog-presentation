@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; background: #ffffff; }
+  body { width: 1500px; height: 560px; font-family: "Segoe UI", Arial, sans-serif; }
+</style>
+</head>
+<body>
+<!-- Data: FastVLM paper, Table 6, rows R2 and R4 (same Qwen2-0.5B LLM, M1 Max MacBook Pro).
+     LLaVA-OneVision: 1152², 7290 tokens, vision 2721.4 ms + prefill 11402.4 ms = 14124 ms.
+     FastVLM: 1024², 256 tokens, vision 116.3 ms + prefill 50.5 ms = 166 ms. -->
+<svg width="1500" height="560" viewBox="0 0 1500 560" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1500" height="560" fill="#ffffff"/>
+  <text x="40" y="58" font-size="28" fill="#52514e">Time to first token, same 0.5B LLM (shorter is faster)</text>
+
+  <!-- scale: 900 px = 14124 ms; bars start at x = 430 -->
+  <!-- LLaVA-OneVision -->
+  <text x="40" y="168" font-size="32" font-weight="700" fill="#0b0b0b">LLaVA-OneVision</text>
+  <text x="40" y="204" font-size="22" fill="#52514e">1152², cut into tiles · 7,290 tokens</text>
+  <rect x="430" y="130" width="173.4" height="84" fill="#8f8e89"/>
+  <rect x="603.4" y="130" width="726.6" height="84" fill="#d3d2cd"/>
+  <line x1="603.4" y1="130" x2="603.4" y2="214" stroke="#ffffff" stroke-width="3"/>
+  <text x="516.7" y="166" font-size="20" fill="#ffffff" text-anchor="middle">vision encoding</text>
+  <text x="516.7" y="194" font-size="22" font-weight="700" fill="#ffffff" text-anchor="middle">2.7 s</text>
+  <text x="966.7" y="166" font-size="20" fill="#3a3936" text-anchor="middle">LLM prefill (7,290 tokens)</text>
+  <text x="966.7" y="194" font-size="22" font-weight="700" fill="#3a3936" text-anchor="middle">11.4 s</text>
+  <text x="1348" y="184" font-size="36" font-weight="700" fill="#0b0b0b">14.1 s</text>
+
+  <!-- FastVLM -->
+  <text x="40" y="358" font-size="32" font-weight="700" fill="#2a78d6">FastVLM</text>
+  <text x="40" y="394" font-size="22" fill="#52514e">1024², whole image · 256 tokens</text>
+  <rect x="430" y="320" width="10.6" height="84" fill="#2a78d6"/>
+  <text x="458" y="374" font-size="36" font-weight="700" fill="#2a78d6">0.17 s</text>
+  <text x="620" y="376" font-size="44" font-weight="700" fill="#D62728">85× faster</text>
+
+  <line x1="430" y1="110" x2="430" y2="430" stroke="#52514e" stroke-width="2"/>
+  <text x="40" y="510" font-size="20" fill="#8a8984">Measured on an M1 Max MacBook Pro (FastVLM paper, Table 6)</text>
+</svg>
+</body>
+</html>

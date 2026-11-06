@@ -33,27 +33,36 @@ CVPR 2025 · Apple
 
 **TTFT = vision encoding time + LLM prefill time**
 
-![h:390](figures/p2_token_count_chart.png)
+![h:330](figures/p2_token_count_chart.png)
 
 Token count grows with the **square** of resolution
+More tokens → **both** parts get slower (e.g. self-attention: cost ∝ tokens²)
 
 <!--
-Say: Pick up from the previous speaker. A ViT never downsamples: the bigger the image, the more tokens, and every layer runs self-attention over all of them.
+Say:
+- TTFT, time to first token, is how long we wait before the model gives its first word. It has two parts: the vision encoder turns the image into tokens, then the LLM reads all of them (prefill).
+- Higher resolution means more tokens: triple the side, nine times the tokens.
+- More tokens slow down every module that processes them. Self-attention is the worst: every token looks at every other token, so its cost grows with the square of the token count. This hits both the encoder and the LLM.
 -->
 
 ---
 
-# Cutting tokens is not enough
+# Trimming tokens is not enough
 
 ![bg right:48% contain](../paper/figures/ttft_breakdown.png)
 
-- At high resolution, **vision encoding itself** takes most of the time
-- Token pruning, image tiling: patches applied outside the ViT
+- At high resolution, **vision encoding** takes most of TTFT
+- Trimming tokens after the encoder only shortens **prefill**: the encoder still processes the whole image
 
 → Can we use an encoder **built for high resolution**?
 
 <!--
-Say: First make clear this chart shows the paper's own model: its token count is already small, yet encoding still takes most of the time. So cutting tokens alone is not enough; tiling is even worse, because it runs the encoder more times.
+Say:
+- This chart splits TTFT into the two parts from the last slide. Note the y-axis is on a log scale.
+- As resolution grows, the orange bar (encoding) catches up with the blue bar (prefill) and then overtakes it.
+- Token-pruning methods leave the encoder as it is and trim tokens after it. At best that removes the blue bar; the orange bar stays, because the encoder has already processed the whole image.
+- So the bottleneck is the encoder itself.
+If asked: The chart is measured on the paper's own, already efficient encoder; a standard encoder would be even slower.
 -->
 
 ---
@@ -194,12 +203,29 @@ Cheap convs (RepMixer) while the map is large; self-attention only once it is sm
 
 ---
 
+<!-- _class: center -->
+
+# Remember this from class?
+
+![h:430](figures/course_cnn_feature_learning.png)
+
+Each Conv / Pool step: the map gets **smaller**, the channels get **more** (64 → 192 → 384)
+
+<!--
+Say:
+- Remember this CNN from class. The red box is the feature-learning part: conv and pool layers shrink the map step by step, while the number of channels grows.
+- FastViTHD's stages are exactly this part. The FC layers for classification are not used: in a VLM, the final feature map goes to the projector and the LLM instead.
+- Next: FastViTHD uses the same idea.
+-->
+
+---
+
 <!-- _class: dense -->
 
-# ② Trading space for channels: what is a "channel"?
+# ② Trading space for channels
 
-- Feature map = height × width × **channels**
-- Each conv kernel outputs one channel; more kernels, more channels → **how many features** each position has
+- Same pattern in FastViTHD: 5 stages, channels grow from 96 to 1536
+- The final 16×16 = 256 positions each carry **1536** numbers: fewer tokens, each holding more
 
 ![w:1000](figures/p13_channel_stack.png)
 
@@ -274,3 +300,80 @@ Say:
 <br>
 
 **Redesign the encoder from the inside, instead of patching it from the outside**
+
+---
+
+# Result ①: same accuracy, 3.2× faster
+
+![bg left:55% contain](../paper/figures/acc_vs_latency_qwen.png)
+
+Same LLM and training; only the vision encoder changes
+
+- Higher = more accurate (average of 5 benchmarks), further left = faster
+- The blue line (FastViTHD) sits **up and to the left** of every other encoder
+- Even at 1024², it is **3.2×** faster than SigLIP at 384², with the same accuracy
+
+<!--
+Say:
+- This is the paper's Fig. 1. Every encoder is paired with the same 0.5B LLM and trained the same way, so only the encoder differs.
+- The small labels are input resolutions. Follow the blue line: from 256² to 1024², accuracy keeps rising while the time stays under 0.2 s.
+- SigLIP, a ViT-style encoder, needs about half a second just for 384². The 3.2× arrow is the paper's own.
+-->
+
+---
+
+# Result ②: one whole image beats tiles
+
+![bg left:52% contain](../paper/figures/static_vs_dynamic_res.png)
+
+Same model (FastViTHD + 7B LLM), two ways to feed a large image:
+
+- Blue squares: resize the **whole image**
+- Pink crosses: cut it into **tiles** (2×2, 3×3, …)
+
+At the same resolution, the whole image scores higher **and** runs faster; tiles only catch up at 1536²
+
+<!--
+Say:
+- This answers the "image tiling" patch from the start of the talk. Note the x-axis is on a log scale.
+- Compare points at the same resolution, for example 1024²: the blue square is higher and further left than every pink 1024² point.
+- Tiling was a workaround for encoders that cannot take large images. FastViTHD can, so it does not need it; only at 1536² do 2×2 tiles draw level.
+-->
+
+---
+
+# Result ③: vs. a tiling model with the same LLM
+
+![w:1050](figures/p20_ttft_vs_onevision.png)
+
+256 tokens instead of 7,290 → **85×** faster, with scores as good or better
+
+<!--
+Say:
+- This is the paper's headline comparison. Both models use the same 0.5B LLM.
+- LLaVA-OneVision cuts a 1152² image into tiles and ends up with 7,290 tokens, so most of its 14 seconds is the LLM reading tokens.
+- FastVLM sends 256 tokens from one 1024² image: 0.17 s in total, and it still scores as well or better on SeedBench, MMMU and DocVQA.
+-->
+
+---
+
+# Discussion
+
+**What the results show**
+
+- The speed-up comes from the encoder: same LLM, same training, only the encoder changed (Result ①)
+- High resolution without tiling, few tokens without pruning (Results ② and ③)
+
+**What to keep in mind**
+
+- Speed was measured on one device (an M1 Max MacBook Pro); other hardware may gain differently
+- In Result ③, FastVLM was trained on more data (27.5M vs. 7.7M samples), so not all of the gap is the encoder
+
+→ **Fixing the encoder itself is what makes high resolution affordable**
+
+<!--
+Say:
+- Two things the results support, and two to keep in mind.
+- The cleanest evidence is Result ①, where the training is identical. Result ③ is the most striking number, but there the training data also differs (paper Table 6, rows R2 and R4).
+- On the device: the paper runs the encoder on the Mac's neural engine and the LLM on its GPU, so the speed-up on a server GPU could be different.
+-->
